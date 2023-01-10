@@ -7,12 +7,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle ("MinecraftServerRCON")]
+[assembly: AssemblyTitle("MinecraftServerRCONPlus")]
 [assembly: AssemblyDescription ("")]
 [assembly: AssemblyConfiguration ("")]
 [assembly: AssemblyCompany ("")]
-[assembly: AssemblyProduct ("MinecraftServerRCON")]
-[assembly: AssemblyCopyright ("Copyright 2015")]
+[assembly: AssemblyProduct("MinecraftServerRCONPlus")]
+[assembly: AssemblyCopyright("Copyright 2023")]
 [assembly: AssemblyTrademark ("")]
 [assembly: AssemblyCulture ("")]
 // This sets the default COM visibility of types in the assembly to invisible.
