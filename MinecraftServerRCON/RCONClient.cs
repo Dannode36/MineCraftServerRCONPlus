@@ -12,7 +12,6 @@ namespace MinecraftServerRCON
 	{
 		public static readonly RCONClient INSTANCE = new RCONClient();
 
-
 		// Current servers like e.g. Spigot are not able to work async :(
 		private static readonly bool rconServerIsMultiThreaded = false;
 		private static int timeoutSeconds;
@@ -134,8 +133,6 @@ namespace MinecraftServerRCON
                 Thread.Sleep(TimeSpan.FromSeconds(0.1));
             }
         }
-
-
 
 		private RCONMessageAnswer internalSendAuth()
 		{
