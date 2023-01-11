@@ -218,7 +218,7 @@ namespace MinecraftServerRCON
 				var answer = this.rconReader.getAnswer(messageNo);
 				if (answer == RCONMessageAnswer.EMPTY)
 				{
-					if ((DateTime.UtcNow - sendTime).TotalSeconds > timeoutSeconds)
+					if (timeoutSeconds > 0 && (DateTime.UtcNow - sendTime).TotalSeconds > timeoutSeconds)
 					{
 						return RCONMessageAnswer.EMPTY;
 					}
