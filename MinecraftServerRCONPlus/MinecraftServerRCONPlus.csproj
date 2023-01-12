@@ -7,9 +7,11 @@
     <Description>A thread-safe Minecraft server's RCON implementation for C#</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>MinecraftServerRCONPlus</Title>
-    <Authors>Dannode36, SommerEngineering</Authors>
+    <Title>RCONServerPlus</Title>
+    <Authors>Dannode36</Authors>
     <Version>1.0.3</Version>
+    <PackageId>RCONServerPlus</PackageId>
+    <Product>RCONServerPlus</Product>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
