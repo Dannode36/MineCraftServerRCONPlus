@@ -55,7 +55,7 @@ namespace MinecraftServerRCON
 			isConfigured = false;
 		}
 
-		public void SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3)
+		public RCONClient SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3)
 		{
 			threadLock.EnterWriteLock();
 
@@ -63,7 +63,7 @@ namespace MinecraftServerRCON
 			{
 				if (isConfigured)
 				{
-					return;
+					return this;
 				}
 
 				this.server = server;
@@ -72,6 +72,7 @@ namespace MinecraftServerRCON
 				isConfigured = true;
 				RCONClient.timeoutSeconds = timeoutSeconds;
 				OpenConnection();
+				return this;
 			}
 			finally
 			{
