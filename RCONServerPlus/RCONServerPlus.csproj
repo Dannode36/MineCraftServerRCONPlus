@@ -4,6 +4,15 @@
     <OutputType>Library</OutputType>
     <NoWin32Manifest>False</NoWin32Manifest>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Description>A light weight and thread-safe RCON library for Minecraft servers written in .NET Standard 2.0</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>RCONServerPlus</Title>
+    <Authors>Dannode36</Authors>
+    <Version>1.1.0</Version>
+    <PackageId>RCONServerPlus</PackageId>
+    <Product>RCONServerPlus</Product>
+    <AssemblyName>RCONServerPlus</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
@@ -11,6 +20,12 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugType>None</DebugType>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
   <ItemGroup>
     <Reference Update="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
