@@ -33,7 +33,7 @@ namespace MinecraftServerRCON
         }
 
 		// Current servers like e.g. Spigot are not able to work async :(
-		private static readonly bool rconServerIsMultiThreaded = false;
+		private readonly bool rconServerIsMultiThreaded = false;
 		private int timeoutSeconds;
 		private static readonly byte[] PADDING = new byte[] { 0x0, 0x0 };
 		private bool isInit = false;
