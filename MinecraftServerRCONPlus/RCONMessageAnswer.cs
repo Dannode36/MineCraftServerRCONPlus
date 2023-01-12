@@ -8,7 +8,6 @@ namespace MinecraftServerRCON
 		public static readonly RCONMessageAnswer EMPTY = new RCONMessageAnswer(false, new byte[] {});
 		
 		private bool success = false;
-		private string answer = string.Empty;
 		private byte[] data = null;
 		private int responseId = -1;
 		
@@ -18,36 +17,32 @@ namespace MinecraftServerRCON
 			this.data = data;
 			this.responseId = responseId;
 		}
-		
 		public byte[] Data
 		{
 			get
 			{
-				return this.data;
+				return data;
 			}
 		}
-		
 		public bool Success
 		{
 			get
 			{
-				return this.success;
+				return success;
 			}
 		}
-		
 		public string Answer
 		{
 			get
 			{
-				return ASCIIEncoding.UTF8.GetString(this.data);
+				return Encoding.UTF8.GetString(data);
 			}
 		}
-		
 		public int ResponseId
 		{
 			get
 			{
-				return this.responseId;
+				return responseId;
 			}
 		}
 	}

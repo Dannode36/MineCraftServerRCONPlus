@@ -20,23 +20,21 @@ namespace MinecraftServerRCON
 		{
 			this.isInit = false;
 		}
-		
 		public void setup(BinaryReader reader)
 		{
 			this.reader = reader;
-			this.isInit = true;
-			this.readerThread();
+			isInit = true;
+			readerThread();
 		}
-		
 		public RCONMessageAnswer getAnswer(int messageId)
 		{
-			var matching = this.answers.Where(n => n.ResponseId == messageId).ToList();
+			var matching = answers.Where(n => n.ResponseId == messageId).ToList();
 			var data = new List<byte>();
 			var dummy = RCONMessageAnswer.EMPTY;
 			
 			if(matching.Count > 0)
 			{
-				matching.ForEach(n => { data.AddRange(n.Data); this.answers.TryTake(out dummy);});
+				matching.ForEach(n => { data.AddRange(n.Data); answers.TryTake(out dummy);});
 				return new RCONMessageAnswer(true, data.ToArray(), messageId);
 			}
 			else
@@ -44,27 +42,26 @@ namespace MinecraftServerRCON
 				return RCONMessageAnswer.EMPTY;
 			}
 		}
-		
 		private void readerThread()
 		{
 			Task.Factory.StartNew(() =>
 			{
 			    while(true)
 			    {
-			    	if(this.isInit == false)
+			    	if(isInit == false)
 			    	{
 			    		return;
 			    	}
 			    	
 			    	try
 			    	{
-			    		var len = this.reader.ReadInt32();
-			    		var reqId = this.reader.ReadInt32();
-			    		var type = this.reader.ReadInt32();
+			    		var len = reader.ReadInt32();
+			    		var reqId = reader.ReadInt32();
+			    		var type = reader.ReadInt32();
 			    		var data = len > 10 ? this.reader.ReadBytes(len - 10): new byte[] { };
-			    		var pad = this.reader.ReadBytes(2);
+			    		var pad = reader.ReadBytes(2);
 			    		var msg = new RCONMessageAnswer(reqId > -1, data, reqId);
-			    		this.answers.Add(msg);
+			    		answers.Add(msg);
 			    	}
 			    	catch(EndOfStreamException e)
 			    	{
@@ -83,7 +80,7 @@ namespace MinecraftServerRCON
 			    }
 			}, TaskCreationOptions.LongRunning);
 		}
-		
+
 		#region IDisposable implementation
 		public void Dispose()
 		{

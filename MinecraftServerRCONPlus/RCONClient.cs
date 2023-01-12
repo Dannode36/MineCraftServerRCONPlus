@@ -10,7 +10,27 @@ namespace MinecraftServerRCON
 {
 	public sealed class RCONClient : IDisposable
 	{
-		public static readonly RCONClient INSTANCE = new RCONClient();
+		public bool IsConnected
+        {
+			get
+			{
+                return tcp.Connected;
+            }
+        }
+        public bool IsInit
+        {
+			get
+			{
+				return isInit;
+			}
+        }
+        public bool IsConfigured
+		{
+			get
+			{
+                return isConfigured;
+            }
+        }
 
 		// Current servers like e.g. Spigot are not able to work async :(
 		private static readonly bool rconServerIsMultiThreaded = false;
@@ -31,94 +51,81 @@ namespace MinecraftServerRCON
 
 		private RCONClient()
 		{
-			this.isInit = false;
-			this.isConfigured = false;
+			isInit = false;
+			isConfigured = false;
 		}
 
-		public void setupStream(string minecraftServer = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3)
+		public void SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3)
 		{
-			this.threadLock.EnterWriteLock();
+			threadLock.EnterWriteLock();
 
 			try
 			{
-				if (this.isConfigured)
+				if (isConfigured)
 				{
 					return;
 				}
 
-				this.server = minecraftServer;
+				this.server = server;
 				this.port = port;
 				this.password = password;
-				this.isConfigured = true;
+				isConfigured = true;
 				RCONClient.timeoutSeconds = timeoutSeconds;
-				this.openConnection();
+				OpenConnection();
 			}
 			finally
 			{
-				this.threadLock.ExitWriteLock();
+				threadLock.ExitWriteLock();
 			}
 		}
 
-		public string sendMessage(RCONMessageType type, string command)
+		public string SendMessage(RCONMessageType type, string command)
 		{
-			if (!this.isConfigured)
+			if (!isConfigured)
 			{
 				return RCONMessageAnswer.EMPTY.Answer;
 			}
 
-			return this.internalSendMessage(type, command).Answer;
+			return InternalSendMessage(type, command).Answer;
 		}
 
-		public void fireAndForgetMessage(RCONMessageType type, string command)
+		public void FireAndForgetMessage(RCONMessageType type, string command)
 		{
-			if (!this.isConfigured)
+			if (!isConfigured)
 			{
 				return;
 			}
 
-			this.internalSendMessage(type, command, true);
+			InternalSendMessage(type, command, true);
 		}
 
-		public bool IsConnected()
-        {
-            return tcp.Connected;
-        }
-        public bool IsInit()
-        {
-            return isInit;
-        }
-        public bool IsConfigured()
+		private void OpenConnection()
 		{
-			return isConfigured;
-		}
-
-		private void openConnection()
-		{
-			if (this.isInit)
+			if (isInit)
 			{
 				return;
 			}
 
 			try
 			{
-				this.rconReader = RCONReader.INSTANCE;
-				this.tcp = new TcpClient(this.server, this.port);
-				this.stream = this.tcp.GetStream();
-				this.writer = new BinaryWriter(this.stream);
-				this.reader = new BinaryReader(this.stream);
-				this.rconReader.setup(this.reader);
+				rconReader = RCONReader.INSTANCE;
+				tcp = new TcpClient(server, port);
+				stream = tcp.GetStream();
+				writer = new BinaryWriter(stream);
+				reader = new BinaryReader(stream);
+				rconReader.setup(reader);
 
-				if (this.password != string.Empty)
+				if (password != string.Empty)
 				{
-					var answer = this.internalSendAuth();
+					var answer = InternalSendAuth();
 					if (answer == RCONMessageAnswer.EMPTY)
 					{
-						this.isInit = false;
+						isInit = false;
 						throw new Exception("IPAddress or Password error!");
 					}
 				}
 
-				this.isInit = true;
+				isInit = true;
 			}
             catch (Exception ex)
             {
@@ -134,27 +141,27 @@ namespace MinecraftServerRCON
             }
         }
 
-		private RCONMessageAnswer internalSendAuth()
+		private RCONMessageAnswer InternalSendAuth()
 		{
 			// Build the message:
-			var command = this.password;
+			var command = password;
 			var type = RCONMessageType.Login;
-			var messageNumber = ++this.messageCounter;
+			var messageNumber = ++messageCounter;
 			var msg = new List<byte>();
 			msg.AddRange(BitConverter.GetBytes(10 + Encoding.UTF8.GetByteCount(command)));
             msg.AddRange(BitConverter.GetBytes(messageNumber));
-			msg.AddRange(BitConverter.GetBytes(type.Value));
-			msg.AddRange(ASCIIEncoding.UTF8.GetBytes(command));
+			msg.AddRange(BitConverter.GetBytes((int)type));
+			msg.AddRange(Encoding.UTF8.GetBytes(command));
 			msg.AddRange(PADDING);
 
 			// Write the message to the wire:
-			this.writer.Write(msg.ToArray());
-			this.writer.Flush();
+			writer.Write(msg.ToArray());
+			writer.Flush();
 
-			return waitReadMessage(messageNumber);
+			return WaitReadMessage(messageNumber);
 		}
 
-		private RCONMessageAnswer internalSendMessage(RCONMessageType type, string command, bool fireAndForget = false)
+		private RCONMessageAnswer InternalSendMessage(RCONMessageType type, string command, bool fireAndForget = false)
 		{
 			try
 			{
@@ -162,32 +169,32 @@ namespace MinecraftServerRCON
 
 				try
 				{
-					this.threadLock.EnterWriteLock();
+					threadLock.EnterWriteLock();
 
 					// Is a reconnection necessary?
-					if (!this.isInit || this.tcp == null || !this.tcp.Connected)
+					if (!isInit || tcp == null || !tcp.Connected)
 					{
-						this.internalDispose();
-						this.openConnection();
+						InternalDispose();
+						OpenConnection();
 					}
 
 
                     // Build the message:
-                    messageNumber = ++this.messageCounter;
+                    messageNumber = ++messageCounter;
 					var msg = new List<byte>();
 					msg.AddRange(BitConverter.GetBytes(10 + Encoding.UTF8.GetByteCount(command)));
 					msg.AddRange(BitConverter.GetBytes(messageNumber));
-					msg.AddRange(BitConverter.GetBytes(type.Value));
+					msg.AddRange(BitConverter.GetBytes((int)type));
 					msg.AddRange(Encoding.UTF8.GetBytes(command));
 					msg.AddRange(PADDING);
 
 					// Write the message to the wire:
-					this.writer.Write(msg.ToArray());
-					this.writer.Flush();
+					writer.Write(msg.ToArray());
+					writer.Flush();
 				}
 				finally
 				{
-					this.threadLock.ExitWriteLock();
+					threadLock.ExitWriteLock();
 				}
 
 				if (fireAndForget && rconServerIsMultiThreaded)
@@ -195,13 +202,13 @@ namespace MinecraftServerRCON
 					var id = messageNumber;
 					Task.Factory.StartNew(() =>
 					{
-						waitReadMessage(id);
+						WaitReadMessage(id);
 					});
 
 					return RCONMessageAnswer.EMPTY;
 				}
 
-				return waitReadMessage(messageNumber);
+				return WaitReadMessage(messageNumber);
 			}
 			catch (Exception e)
 			{
@@ -210,12 +217,12 @@ namespace MinecraftServerRCON
 			}
 		}
 
-		private RCONMessageAnswer waitReadMessage(int messageNo)
+		private RCONMessageAnswer WaitReadMessage(int messageNo)
 		{
 			var sendTime = DateTime.UtcNow;
 			while (true)
 			{
-				var answer = this.rconReader.getAnswer(messageNo);
+				var answer = rconReader.getAnswer(messageNo);
 				if (answer == RCONMessageAnswer.EMPTY)
 				{
 					if (timeoutSeconds > 0 && (DateTime.UtcNow - sendTime).TotalSeconds > timeoutSeconds)
@@ -232,78 +239,75 @@ namespace MinecraftServerRCON
 		}
 
 		#region IDisposable implementation
-
 		public void Dispose()
 		{
-			this.threadLock.EnterWriteLock();
+			threadLock.EnterWriteLock();
 
 			try
 			{
-				this.internalDispose();
+				InternalDispose();
 			}
 			finally
 			{
-				this.threadLock.ExitWriteLock();
+				threadLock.ExitWriteLock();
 			}
 		}
+        private void InternalDispose()
+        {
+            isInit = false;
 
-		#endregion
+            try
+            {
+                rconReader.Dispose();
+            }
+            catch
+            {
+            }
 
-		private void internalDispose()
-		{
-			this.isInit = false;
+            if (writer != null)
+            {
+                try
+                {
+                    writer.Dispose();
+                }
+                catch
+                {
+                }
+            }
 
-			try
-			{
-				this.rconReader.Dispose();
-			}
-			catch
-			{
-			}
+            if (reader != null)
+            {
+                try
+                {
+                    reader.Dispose();
+                }
+                catch
+                {
+                }
+            }
 
-			if (this.writer != null)
-			{
-				try
-				{
-					this.writer.Dispose();
-				}
-				catch
-				{
-				}
-			}
+            if (stream != null)
+            {
+                try
+                {
+                    stream.Dispose();
+                }
+                catch
+                {
+                }
+            }
 
-			if (this.reader != null)
-			{
-				try
-				{
-					this.reader.Dispose();
-				}
-				catch
-				{
-				}
-			}
-
-			if (this.stream != null)
-			{
-				try
-				{
-					this.stream.Dispose();
-				}
-				catch
-				{
-				}
-			}
-
-			if (this.tcp != null)
-			{
-				try
-				{
-					this.tcp.Close();
-				}
-				catch
-				{
-				}
-			}
-		}
-	}
+            if (tcp != null)
+            {
+                try
+                {
+                    tcp.Close();
+                }
+                catch
+                {
+                }
+            }
+        }
+        #endregion
+    }
 }
