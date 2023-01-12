@@ -49,7 +49,7 @@ namespace MinecraftServerRCON
 		private ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
 		private RCONReader rconReader = RCONReader.INSTANCE;
 
-		private RCONClient()
+		public RCONClient()
 		{
 			isInit = false;
 			isConfigured = false;
