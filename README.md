@@ -1,24 +1,24 @@
 # MinecraftServerRCONSharp
-A thread-safe Minecraft server's RCON implementation for C# and Mono.
+A thread-safe Minecraft server's RCON implementation for C#. Original library [MinecraftServerRCONSharp](https://github.com/SommerEngineering/MinecraftServerRCONSharp/releases) by Sommer Engineering
 
-Example usage: Change the "ABC" player's game mode
+Example usage: Change the gamemode of the player "Steve" to creative
 ```C#
-  using System;
-  using MinecraftServerRCON;
-  
-  namespace RCONTest
-  {
-	class Program
-	{
-		using(var rcon = new RCONClient())
-		{
-	    		rcon.setupStream("127.0.0.1", password: "123");
-	    		answer = rcon.sendMessage(RCONMessageType.Command, "gamemode creative ABC");
-	    		Console.WriteLine(answer.RemoveColorCodes());
-		}
-	}
-  }
+using MinecraftServerRCON;
+
+class RCONTest
+{
+    static void Main(string[] args)
+    {
+        using var rcon = new RCONClient();
+        rcon.SetupStream("127.0.0.1", 25575, password: "123");
+        string answer = rcon.SendMessage(RCONMessageType.Command, "gamemode creative Steve");
+        Console.WriteLine(answer.RemoveColorCodes());
+    }
+}
 ```
+##
 
 ## Setup
-The fasted way to use this library is to use NuGet: https://www.nuget.org/packages/RCONServer/. Further, you can also download the library from the [releases](https://github.com/SommerEngineering/MinecraftServerRCONSharp/releases) page.
+Download the library from the [releases](https://github.com/Dannode36/MinecraftServerRCONPlus/releases) page.
+
+**Nuget package coming soon**
