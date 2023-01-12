@@ -4,6 +4,12 @@
     <OutputType>Library</OutputType>
     <NoWin32Manifest>False</NoWin32Manifest>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Description>A thread-safe Minecraft server's RCON implementation for C#</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>MinecraftServerRCONPlus</Title>
+    <Authors>Dannode36, SommerEngineering</Authors>
+    <Version>1.0.3</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
@@ -11,6 +17,12 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugType>None</DebugType>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
   <ItemGroup>
     <Reference Update="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
