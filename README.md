@@ -10,7 +10,7 @@ Example usage: Change the "ABC" player's game mode
   {
 	class Program
 	{
-		using(var rcon = RCONClient.INSTANCE)
+		using(var rcon = new RCONClient())
 		{
 	    		rcon.setupStream("127.0.0.1", password: "123");
 	    		answer = rcon.sendMessage(RCONMessageType.Command, "gamemode creative ABC");
