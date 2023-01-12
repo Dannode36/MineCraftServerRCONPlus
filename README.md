@@ -1,5 +1,5 @@
 # MinecraftServerRCONSharp
-A thread-safe Minecraft server's RCON implementation for C#. Original library [MinecraftServerRCONSharp](https://github.com/SommerEngineering/MinecraftServerRCONSharp/releases) by Sommer Engineering
+A thread-safe Minecraft server's RCON implementation for C#. Original library [MinecraftServerRCONSharp](https://github.com/ShineSmile/MinecraftServerRCON) by ShineSmile
 
 Example usage: Change the gamemode of the player "Steve" to creative
 ```C#
