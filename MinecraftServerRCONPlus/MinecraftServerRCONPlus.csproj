@@ -9,9 +9,10 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>RCONServerPlus</Title>
     <Authors>Dannode36</Authors>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <PackageId>RCONServerPlus</PackageId>
     <Product>RCONServerPlus</Product>
+    <AssemblyName>RCONServerPlus</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>

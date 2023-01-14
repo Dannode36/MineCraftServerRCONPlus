@@ -31,10 +31,14 @@ namespace MinecraftServerRCON
                 return isConfigured;
             }
         }
+		public bool tryReconnect;
 
 		// Current servers like e.g. Spigot are not able to work async :(
 		private readonly bool rconServerIsMultiThreaded = false;
 		private int timeoutSeconds;
+        private int reconnectDelaySeconds;
+        private int maxReconAttempts;
+        private int curReconAttempts;
 		private static readonly byte[] PADDING = new byte[] { 0x0, 0x0 };
 		private bool isInit = false;
 		private bool isConfigured = false;
@@ -49,13 +53,23 @@ namespace MinecraftServerRCON
 		private ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
 		private RCONReader rconReader = RCONReader.INSTANCE;
 
-		public RCONClient()
+        public RCONClient()
 		{
 			isInit = false;
 			isConfigured = false;
 		}
 
-		public RCONClient SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="server">IP of the server</param>
+        /// <param name="port">RCON port (defaults to 25575 for minecraft)</param>
+        /// <param name="password">The password configured in server.properties</param>
+        /// <param name="timeoutSeconds">How long to wait for a response (anything less than 0 is not recommended as the server may never respond)</param>
+        /// <param name="retryConnect">Retry initial connection to the server if it fails</param>
+        /// <param name="retryDelaySeconds">Time between reconnection attempts</param>
+        /// <returns></returns>
+        public RCONClient SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3, bool tryReconnect = false, int reconnectDelaySeconds = 5, int maxReconAttempts = 10)
 		{
 			threadLock.EnterWriteLock();
 
@@ -71,6 +85,12 @@ namespace MinecraftServerRCON
 				this.password = password;
 				isConfigured = true;
 				this.timeoutSeconds = timeoutSeconds;
+
+				this.tryReconnect = tryReconnect;
+				this.reconnectDelaySeconds = reconnectDelaySeconds;
+				this.maxReconAttempts = maxReconAttempts;
+				curReconAttempts = 0;
+
 				OpenConnection();
 				return this;
 			}
@@ -119,20 +139,37 @@ namespace MinecraftServerRCON
 				if (password != string.Empty)
 				{
 					var answer = InternalSendAuth();
+
+					//Response ID of -1 means auth failed which EMPTY defaults to
 					if (answer == RCONMessageAnswer.EMPTY)
 					{
 						isInit = false;
-						throw new Exception("IPAddress or Password error!");
+						throw new Exception("Authentication failed (check password)");
 					}
 				}
 
 				isInit = true;
 			}
-            catch (Exception ex)
-            {
-                Console.WriteLine("Exception while connecting: " + ex.Message);
+			catch(Exception ex)
+			{
                 isInit = false;
                 isConfigured = false;
+                Console.Error.WriteLine("Exception while connecting: " + ex.Message);
+				if (tryReconnect)
+				{
+                    if (curReconAttempts < maxReconAttempts)
+                    {
+                        curReconAttempts++;
+                        Console.Error.WriteLine($"Attempting reconnect in {reconnectDelaySeconds} seconds [{curReconAttempts}/{maxReconAttempts}]");
+                        Thread.Sleep(TimeSpan.FromSeconds(reconnectDelaySeconds));
+                        OpenConnection();
+                    }
+                    else
+                    {
+                        curReconAttempts = 0;
+                        Console.Error.WriteLine("Max reconnects reached :(");
+                    }
+                }
             }
             finally
             {
@@ -226,6 +263,7 @@ namespace MinecraftServerRCON
 				var answer = rconReader.getAnswer(messageNo);
 				if (answer == RCONMessageAnswer.EMPTY)
 				{
+					//If timeoutSeconds is negative keep trying
 					if (timeoutSeconds > 0 && (DateTime.UtcNow - sendTime).TotalSeconds > timeoutSeconds)
 					{
 						return RCONMessageAnswer.EMPTY;
