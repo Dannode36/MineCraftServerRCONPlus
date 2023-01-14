@@ -60,7 +60,7 @@ namespace MinecraftServerRCON
 		}
 
         /// <summary>
-        /// 
+        /// Avoid trying to connect to the same server from multiple clients as it could result in an AuthException.
         /// </summary>
         /// <param name="server">IP of the server</param>
         /// <param name="port">RCON port (defaults to 25575 for minecraft)</param>
@@ -144,12 +144,24 @@ namespace MinecraftServerRCON
 					if (answer == RCONMessageAnswer.EMPTY)
 					{
 						isInit = false;
-						throw new Exception("Authentication failed (check password)");
+						throw new AuthException("Authentication failed (check password)");
 					}
 				}
 
 				isInit = true;
 			}
+			catch(AuthException ex)
+			{
+                isInit = false;
+                isConfigured = false;
+                Console.Error.WriteLine("Exception while connecting: " + ex.Message);
+
+				//Only say this if there are reconnection attempts remaining
+				if(curReconAttempts != maxReconAttempts)
+				{
+					Console.Error.WriteLine("Reconnection will not be attempted due to this error");
+				}
+            }
 			catch(Exception ex)
 			{
                 isInit = false;
@@ -167,7 +179,6 @@ namespace MinecraftServerRCON
                     else
                     {
                         curReconAttempts = 0;
-                        Console.Error.WriteLine("Max reconnects reached :(");
                     }
                 }
             }
