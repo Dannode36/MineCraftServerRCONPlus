@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MinecraftServerRCON
 {
-	public static class Helpers
+	public static class Extensions
 	{
 		public static string RemoveColorCodes(this string text)
 		{

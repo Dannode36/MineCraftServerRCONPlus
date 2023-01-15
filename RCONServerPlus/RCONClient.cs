@@ -60,7 +60,7 @@ namespace MinecraftServerRCON
 		}
 
         /// <summary>
-        /// Avoid trying to connect to the same server from multiple clients as it could result in an AuthException.
+        /// Avoid trying to connect to the same server from multiple clients as it could result in an AutshException.
         /// </summary>
         /// <param name="server">IP of the server</param>
         /// <param name="port">RCON port (defaults to 25575 for minecraft)</param>

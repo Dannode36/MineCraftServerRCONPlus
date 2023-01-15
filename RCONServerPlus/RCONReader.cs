@@ -18,7 +18,7 @@ namespace MinecraftServerRCON
 		
 		private RCONReader()
 		{
-			this.isInit = false;
+			isInit = false;
 		}
 		public void setup(BinaryReader reader)
 		{
