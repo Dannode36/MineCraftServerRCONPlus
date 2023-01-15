@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
 	public sealed class RCONClient : IDisposable
 	{
@@ -31,31 +31,34 @@ namespace MinecraftServerRCON
                 return isConfigured;
             }
         }
-		public bool tryReconnect;
+		public ClientConfiguration Config
+		{
+			get
+			{
+                return config;
+            }
+        }
 
-		// Current servers like e.g. Spigot are not able to work async :(
-		private readonly bool rconServerIsMultiThreaded = false;
-		private int timeoutSeconds;
-        private int reconnectDelaySeconds;
-        private int maxReconAttempts;
-        private int curReconAttempts;
+        private ClientConfiguration config;
+		private string server;
+		private string password;
+		private int port;
+        private int curReconAttempts = 0;
 		private static readonly byte[] PADDING = new byte[] { 0x0, 0x0 };
 		private bool isInit = false;
 		private bool isConfigured = false;
-		private string server = string.Empty;
-		private string password = string.Empty;
-		private int port = 25575;
-		private int messageCounter = 0;
+		private static int messageCounter = 0;
 		private NetworkStream stream = null;
 		private TcpClient tcp = null;
 		private BinaryWriter writer = null;
 		private BinaryReader reader = null;
-		private ReaderWriterLockSlim threadLock = new ReaderWriterLockSlim();
-		private RCONReader rconReader = RCONReader.INSTANCE;
+		private ReaderWriterLockSlim threadLock;
+		private RCONReader rconReader;
 
         public RCONClient()
 		{
-			isInit = false;
+			threadLock = new ReaderWriterLockSlim();
+            isInit = false;
 			isConfigured = false;
 		}
 
@@ -69,48 +72,76 @@ namespace MinecraftServerRCON
         /// <param name="retryConnect">Retry initial connection to the server if it fails</param>
         /// <param name="retryDelaySeconds">Time between reconnection attempts</param>
         /// <returns></returns>
-        public RCONClient SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", int timeoutSeconds = 3, bool tryReconnect = false, int reconnectDelaySeconds = 5, int maxReconAttempts = 10)
-		{
-			threadLock.EnterWriteLock();
+        public RCONClient SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", ClientConfiguration clientConfig = null)
+        {
+            threadLock.EnterWriteLock();
 
-			try
-			{
-				if (isConfigured)
+            try
+            {
+                if (isConfigured)
+                {
+                    return this;
+                }
+
+                this.server = server;
+                this.port = port;
+                this.password = password;
+				if(clientConfig == null)
 				{
-					return this;
+                    config = ClientConfiguration.DEFAULT;
 				}
+				else
+				{
+					config = clientConfig;
+				}
+                rconReader = new RCONReader();
+                isConfigured = true;
+                OpenConnection();
+                return this;
+            }
+            finally
+            {
+                threadLock.ExitWriteLock();
+            }
+        }
 
-				this.server = server;
-				this.port = port;
-				this.password = password;
-				isConfigured = true;
-				this.timeoutSeconds = timeoutSeconds;
-
-				this.tryReconnect = tryReconnect;
-				this.reconnectDelaySeconds = reconnectDelaySeconds;
-				this.maxReconAttempts = maxReconAttempts;
-				curReconAttempts = 0;
-
-				OpenConnection();
-				return this;
-			}
-			finally
-			{
-				threadLock.ExitWriteLock();
-			}
-		}
-
-		public string SendMessage(RCONMessageType type, string command)
+        /// <summary>
+        /// Sends a command to the server and returns its response (Not all commands will give a response)
+        /// </summary>
+        /// <param name="command">Minecraft command with '/' removed</param>
+        /// <returns>Servers response</returns>
+        public string SendCommand(string command)
 		{
 			if (!isConfigured)
 			{
 				return RCONMessageAnswer.EMPTY.Answer;
 			}
 
-			return InternalSendMessage(type, command).Answer;
+			return InternalSendMessage(RCONMessageType.Command, command).Answer;
 		}
 
-		public void FireAndForgetMessage(RCONMessageType type, string command)
+        /// <summary>
+		/// Sends a message to the server and returns its response (Not all messages will give a response)
+		/// </summary>
+		/// <param name="type"></param>
+		/// <param name="message"></param>
+		/// <returns>Servers response</returns>
+        public string SendMessage(RCONMessageType type, string message)
+		{
+			if (!isConfigured)
+			{
+				return RCONMessageAnswer.EMPTY.Answer;
+			}
+
+			return InternalSendMessage(type, message).Answer;
+		}
+
+        /// <summary>
+        /// Sends a message to the server but does not wait for a response
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="command"></param>
+        public void FireAndForgetMessage(RCONMessageType type, string command)
 		{
 			if (!isConfigured)
 			{
@@ -129,7 +160,6 @@ namespace MinecraftServerRCON
 
 			try
 			{
-				rconReader = RCONReader.INSTANCE;
 				tcp = new TcpClient(server, port);
 				stream = tcp.GetStream();
 				writer = new BinaryWriter(stream);
@@ -140,7 +170,7 @@ namespace MinecraftServerRCON
 				{
 					var answer = InternalSendAuth();
 
-					//Response ID of -1 means auth failed which EMPTY defaults to
+					//Response ID of -1 means auth failed aka and EMPTY message apparently
 					if (answer == RCONMessageAnswer.EMPTY)
 					{
 						isInit = false;
@@ -157,7 +187,7 @@ namespace MinecraftServerRCON
                 Console.Error.WriteLine("Exception while connecting: " + ex.Message);
 
 				//Only say this if there are reconnection attempts remaining
-				if(curReconAttempts != maxReconAttempts)
+				if(curReconAttempts != config.reconnectAttempts)
 				{
 					Console.Error.WriteLine("Reconnection will not be attempted due to this error");
 				}
@@ -167,13 +197,13 @@ namespace MinecraftServerRCON
                 isInit = false;
                 isConfigured = false;
                 Console.Error.WriteLine("Exception while connecting: " + ex.Message);
-				if (tryReconnect)
+				if (config.retryConnect)
 				{
-                    if (curReconAttempts < maxReconAttempts)
+                    if (curReconAttempts < config.reconnectAttempts)
                     {
                         curReconAttempts++;
-                        Console.Error.WriteLine($"Attempting reconnect in {reconnectDelaySeconds} seconds [{curReconAttempts}/{maxReconAttempts}]");
-                        Thread.Sleep(TimeSpan.FromSeconds(reconnectDelaySeconds));
+                        Console.Error.WriteLine($"Attempting reconnect in {config.reconnectDelaySeconds} seconds [{curReconAttempts}/{config.reconnectAttempts}]");
+                        Thread.Sleep(TimeSpan.FromSeconds(config.reconnectDelaySeconds));
                         OpenConnection();
                     }
                     else
@@ -189,7 +219,6 @@ namespace MinecraftServerRCON
                 Thread.Sleep(TimeSpan.FromSeconds(0.1));
             }
         }
-
 		private RCONMessageAnswer InternalSendAuth()
 		{
 			// Build the message:
@@ -209,7 +238,6 @@ namespace MinecraftServerRCON
 
 			return WaitReadMessage(messageNumber);
 		}
-
 		private RCONMessageAnswer InternalSendMessage(RCONMessageType type, string command, bool fireAndForget = false)
 		{
 			try
@@ -226,7 +254,6 @@ namespace MinecraftServerRCON
 						InternalDispose();
 						OpenConnection();
 					}
-
 
                     // Build the message:
                     messageNumber = ++messageCounter;
@@ -246,7 +273,7 @@ namespace MinecraftServerRCON
 					threadLock.ExitWriteLock();
 				}
 
-				if (fireAndForget && rconServerIsMultiThreaded)
+				if (fireAndForget && config.rconServerIsMultiThreaded)
 				{
 					var id = messageNumber;
 					Task.Factory.StartNew(() =>
@@ -265,7 +292,6 @@ namespace MinecraftServerRCON
 				return RCONMessageAnswer.EMPTY;
 			}
 		}
-
 		private RCONMessageAnswer WaitReadMessage(int messageNo)
 		{
 			var sendTime = DateTime.UtcNow;
@@ -275,7 +301,7 @@ namespace MinecraftServerRCON
 				if (answer == RCONMessageAnswer.EMPTY)
 				{
 					//If timeoutSeconds is negative keep trying
-					if (timeoutSeconds > 0 && (DateTime.UtcNow - sendTime).TotalSeconds > timeoutSeconds)
+					if (config.timeoutSeconds > 0 && (DateTime.UtcNow - sendTime).TotalSeconds > config.timeoutSeconds)
 					{
 						return RCONMessageAnswer.EMPTY;
 					}

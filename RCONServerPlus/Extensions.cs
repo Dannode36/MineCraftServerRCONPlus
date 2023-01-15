@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
 	public static class Extensions
 	{

@@ -6,17 +6,16 @@ using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
 	internal class RCONReader : IDisposable
 	{
 		public static readonly RCONReader INSTANCE = new RCONReader();
-		
 		private bool isInit = false;
 		private BinaryReader reader = null;
 		private ConcurrentBag<RCONMessageAnswer> answers = new ConcurrentBag<RCONMessageAnswer>();
-		
-		private RCONReader()
+
+		public RCONReader()
 		{
 			isInit = false;
 		}
