@@ -1,5 +1,5 @@
 # RCONServerPlus
-A thread-safe Minecraft server's RCON implementation for C# rewritten in .NET Standard 2.0. Based on [MinecraftServerRCONSharp](https://github.com/ShineSmile/MinecraftServerRCON)
+A light weight and thread-safe RCON library for Minecraft servers written in .NET Standard 2.0 Based on [MinecraftServerRCONSharp](https://github.com/ShineSmile/MinecraftServerRCON)
 
 ## Issues or Bugs
 If you come across any bugs or issues of the sort (even ideas for things I could add) please feel free to open a [new issue](https://github.com/Dannode36/RCONServerPlus/issues/new) outlining your problem :)
