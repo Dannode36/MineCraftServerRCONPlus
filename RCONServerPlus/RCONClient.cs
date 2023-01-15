@@ -47,7 +47,6 @@ namespace RCONServerPlus
 		private static readonly byte[] PADDING = new byte[] { 0x0, 0x0 };
 		private bool isInit = false;
 		private bool isConfigured = false;
-		private static int messageCounter = 0;
 		private NetworkStream stream = null;
 		private TcpClient tcp = null;
 		private BinaryWriter writer = null;
@@ -164,7 +163,7 @@ namespace RCONServerPlus
 				stream = tcp.GetStream();
 				writer = new BinaryWriter(stream);
 				reader = new BinaryReader(stream);
-				rconReader.setup(reader);
+				rconReader.Setup(reader);
 
 				if (password != string.Empty)
 				{
@@ -224,7 +223,7 @@ namespace RCONServerPlus
 			// Build the message:
 			var command = password;
 			var type = RCONMessageType.Login;
-			var messageNumber = ++messageCounter;
+			var messageNumber = ThreadSafeIncrement.Get();
 			var msg = new List<byte>();
 			msg.AddRange(BitConverter.GetBytes(10 + Encoding.UTF8.GetByteCount(command)));
             msg.AddRange(BitConverter.GetBytes(messageNumber));
@@ -235,8 +234,9 @@ namespace RCONServerPlus
 			// Write the message to the wire:
 			writer.Write(msg.ToArray());
 			writer.Flush();
+            //Console.WriteLine($"Auth Sent [{messageNumber}]");
 
-			return WaitReadMessage(messageNumber);
+            return WaitReadMessage(messageNumber);
 		}
 		private RCONMessageAnswer InternalSendMessage(RCONMessageType type, string command, bool fireAndForget = false)
 		{
@@ -256,7 +256,7 @@ namespace RCONServerPlus
 					}
 
                     // Build the message:
-                    messageNumber = ++messageCounter;
+                    messageNumber = ThreadSafeIncrement.Get();
 					var msg = new List<byte>();
 					msg.AddRange(BitConverter.GetBytes(10 + Encoding.UTF8.GetByteCount(command)));
 					msg.AddRange(BitConverter.GetBytes(messageNumber));
@@ -267,6 +267,8 @@ namespace RCONServerPlus
 					// Write the message to the wire:
 					writer.Write(msg.ToArray());
 					writer.Flush();
+
+					Console.WriteLine($"Message Sent [{messageNumber}]: {command}");
 				}
 				finally
 				{
@@ -297,7 +299,7 @@ namespace RCONServerPlus
 			var sendTime = DateTime.UtcNow;
 			while (true)
 			{
-				var answer = rconReader.getAnswer(messageNo);
+				var answer = rconReader.GetAnswer(messageNo);
 				if (answer == RCONMessageAnswer.EMPTY)
 				{
 					//If timeoutSeconds is negative keep trying
