@@ -6,27 +6,26 @@ using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
 	internal class RCONReader : IDisposable
 	{
-		public static readonly RCONReader INSTANCE = new RCONReader();
-		
+		internal static readonly RCONReader INSTANCE = new RCONReader();
 		private bool isInit = false;
 		private BinaryReader reader = null;
-		private ConcurrentBag<RCONMessageAnswer> answers = new ConcurrentBag<RCONMessageAnswer>();
-		
-		private RCONReader()
+		private readonly ConcurrentBag<RCONMessageAnswer> answers = new ConcurrentBag<RCONMessageAnswer>();
+
+		public RCONReader()
 		{
 			isInit = false;
 		}
-		public void setup(BinaryReader reader)
+		public void Setup(BinaryReader reader)
 		{
 			this.reader = reader;
 			isInit = true;
-			readerThread();
+			ReaderThread();
 		}
-		public RCONMessageAnswer getAnswer(int messageId)
+		public RCONMessageAnswer GetAnswer(int messageId)
 		{
 			var matching = answers.Where(n => n.ResponseId == messageId).ToList();
 			var data = new List<byte>();
@@ -34,7 +33,7 @@ namespace MinecraftServerRCON
 			
 			if(matching.Count > 0)
 			{
-				matching.ForEach(n => { data.AddRange(n.Data); answers.TryTake(out dummy);});
+				matching.ForEach(n => { data.AddRange(n.Data); Console.WriteLine(answers.TryTake(out dummy));});
 				return new RCONMessageAnswer(true, data.ToArray(), messageId);
 			}
 			else
@@ -42,7 +41,7 @@ namespace MinecraftServerRCON
 				return RCONMessageAnswer.EMPTY;
 			}
 		}
-		private void readerThread()
+		private void ReaderThread()
 		{
 			Task.Factory.StartNew(() =>
 			{
@@ -58,19 +57,19 @@ namespace MinecraftServerRCON
 			    		var len = reader.ReadInt32();
 			    		var reqId = reader.ReadInt32();
 			    		var type = reader.ReadInt32();
-			    		var data = len > 10 ? this.reader.ReadBytes(len - 10): new byte[] { };
+			    		var data = len > 10 ? reader.ReadBytes(len - 10): new byte[] { };
 			    		var pad = reader.ReadBytes(2);
 			    		var msg = new RCONMessageAnswer(reqId > -1, data, reqId);
 			    		answers.Add(msg);
 			    	}
-			    	catch(EndOfStreamException e)
+			    	/*catch(EndOfStreamException e)
 			    	{
 			    		return;
 			    	}
 			    	catch(ObjectDisposedException e)
 			    	{
 			    		return;
-			    	}
+			    	}*/
 			    	catch
 			    	{
 			    		return;

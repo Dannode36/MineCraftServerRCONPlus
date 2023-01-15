@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
 	public enum RCONMessageType
     {
