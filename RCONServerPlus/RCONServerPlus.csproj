@@ -4,7 +4,7 @@
     <OutputType>Library</OutputType>
     <NoWin32Manifest>False</NoWin32Manifest>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Description>A thread-safe Minecraft server's RCON implementation for C#</Description>
+    <Description>A light weight and thread-safe RCON library for Minecraft servers written in .NET Standard 2.0</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>RCONServerPlus</Title>

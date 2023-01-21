@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Text;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
 	internal sealed class RCONMessageAnswer
 	{
 		public static readonly RCONMessageAnswer EMPTY = new RCONMessageAnswer(false, new byte[] {});
 		
-		private bool success = false;
-		private byte[] data = null;
-		private int responseId = -1;
+		private readonly bool success = false;
+		private readonly byte[] data = null;
+		private readonly int responseId = -1;
 		
 		public RCONMessageAnswer(bool success, byte[] data, int responseId = -1)
 		{

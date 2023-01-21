@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
 
-namespace MinecraftServerRCON
+namespace RCONServerPlus
 {
-	public static class Helpers
+	public static class Extensions
 	{
 		public static string RemoveColorCodes(this string text)
 		{
@@ -29,7 +29,6 @@ namespace MinecraftServerRCON
 			sb.Replace("§d", string.Empty);
 			sb.Replace("§e", string.Empty);
 			sb.Replace("§f", string.Empty);
-			
 			return sb.ToString();
 		}
 	}
