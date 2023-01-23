@@ -70,8 +70,8 @@ namespace RCONServerPlus
         /// <param name="timeoutSeconds">How long to wait for a response (anything less than 0 is not recommended as the server may never respond)</param>
         /// <param name="retryConnect">Retry initial connection to the server if it fails</param>
         /// <param name="retryDelaySeconds">Time between reconnection attempts</param>
-        /// <returns></returns>
-        public RCONClient SetupStream(string server = "127.0.0.1", int port = 25575, string password = "", ClientConfiguration clientConfig = null)
+        /// <returns>RCON Client</returns>
+        public RCONClient SetupStream(string server, int port, string password, ClientConfiguration clientConfig = null)
         {
             threadLock.EnterWriteLock();
 

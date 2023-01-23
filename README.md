@@ -21,7 +21,7 @@ class RCONTest
     static void Main(string[] args)
     {
         using var rcon = new RCONClient();
-        rcon.SetupStream("127.0.0.1", 25575, password: "123", tryReconnect: true);
+        rcon.SetupStream("127.0.0.1", 25575, "123", new ClientConfiguration());
         string answer = rcon.SendMessage(RCONMessageType.Command, "gamemode creative Steve");
         Console.WriteLine(answer.RemoveColorCodes());
     }
