@@ -64,14 +64,39 @@ namespace RCONServerPlus
         /// <summary>
         /// Avoid trying to connect to the same server from multiple clients as it could result in an AutshException.
         /// </summary>
-        /// <param name="server">IP of the server</param>
-        /// <param name="port">RCON port (defaults to 25575 for minecraft)</param>
+        /// <param name="address">IP address of the server</param>
         /// <param name="password">The password configured in server.properties</param>
-        /// <param name="timeoutSeconds">How long to wait for a response (anything less than 0 is not recommended as the server may never respond)</param>
-        /// <param name="retryConnect">Retry initial connection to the server if it fails</param>
-        /// <param name="retryDelaySeconds">Time between reconnection attempts</param>
         /// <returns>RCON Client</returns>
-        public RCONClient SetupStream(string server, int port, string password, ClientConfiguration clientConfig = null)
+        public RCONClient SetupStream(string address, string password, ClientConfiguration clientConfig = null)
+        {
+            try
+            {
+				address = address.Trim();
+                if (address == string.Empty)
+                {
+                    throw new Exception(
+                    "Address was invalid.");
+                }
+
+                string[] addressComponents = address.Split(':');
+                int port = addressComponents.Length > 1 ? int.Parse(addressComponents[1]) : 25565; //Prevents out of bounds exception and will default to 25565
+				return SetupStream(addressComponents[0], port, password, clientConfig);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Avoid trying to connect to the same server from multiple clients as it could result in an AutshException.
+        /// </summary>
+        /// <param name="server">IP of the server</param>
+        /// <param name="port">RCON port (defaults to 25565 for minecraft)</param>
+        /// <param name="password">The password configured in server.properties</param>
+        /// <returns>RCON Client</returns>
+		public RCONClient SetupStream(string server, int port, string password, ClientConfiguration clientConfig = null)
         {
             threadLock.EnterWriteLock();
 
