@@ -1,4 +1,4 @@
-# RCONServerPlus
+# RCONsole
 A light weight and thread-safe RCON library for Minecraft servers written in .NET Standard 2.0 Based on [MinecraftServerRCONSharp](https://github.com/ShineSmile/MinecraftServerRCON)
 
 ## Issues or Bugs
